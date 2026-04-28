@@ -9,7 +9,7 @@ from pathlib import Path
 from threading import Lock
 from typing import Dict, List
 
-from flask import Flask, abort, redirect, render_template, request, url_for
+from flask import Flask, abort, make_response, redirect, render_template, request, url_for
 
 
 APP_DIR = Path(__file__).resolve().parent
@@ -186,6 +186,30 @@ def make_app() -> Flask:
     @app.route("/")
     def root():
         return render_template("start.html")
+
+    @app.get("/claim")
+    def claim_token():
+        ensure_storage()
+        valid_tokens = load_valid_tokens()
+        if not valid_tokens:
+            return render_template("no_tokens.html"), 503
+
+        cookie_token = request.cookies.get("claimed_token", "").strip()
+        if cookie_token and cookie_token in valid_tokens:
+            return redirect(url_for("token_start", token=cookie_token))
+
+        with _CSV_LOCK:
+            participants = load_participants()
+            used_tokens = set(participants.keys())
+            available = sorted(valid_tokens - used_tokens)
+            if not available:
+                return render_template("no_tokens.html"), 503
+            token = available[0]
+
+        resp = make_response(redirect(url_for("token_start", token=token)))
+        # Long-lived cookie so participants can reopen the same link.
+        resp.set_cookie("claimed_token", token, max_age=60 * 60 * 24 * 180, samesite="Lax")
+        return resp
 
     @app.get("/t/<token>")
     def token_start(token: str):
