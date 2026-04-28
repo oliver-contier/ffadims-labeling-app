@@ -9,8 +9,9 @@
 <body>
   <main class="container">
     <h1>Trial {{ trial_num }} of {{ n_trials }}</h1>
-    <section class="card">
-      <p>Please type in three words that describe these images, separated by commas. Press Enter to save and continue.</p>
+    <section class="card instruction-card">
+      <p><strong>Enter three descriptive words</strong> separated by commas.</p>
+      <p>The order does not matter. You can use any descriptive words (nouns or adjectives). Press Enter to save and continue.</p>
     </section>
 
     <form id="trial-form" class="card" method="post" action="{{ url_for('trial_save', token=token, trial_num=trial_num) }}">

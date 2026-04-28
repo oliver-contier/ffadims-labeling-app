@@ -11,7 +11,15 @@
     <h1>Dimension Labeling Task</h1>
 
     <section class="card">
-      <p>Thank you for participating. In this task, you will see grids of images. For each grid, type three words that best describe what the images have in common, separated by commas. Before you begin, please review the examples below. When you are ready, scroll down and click "Start Task".</p>
+      <p>Thank you for participating.</p>
+      <p>In this task, you will see grids of images. For each grid, type <strong>three words</strong> that best describe what the images have in common.</p>
+      <ul class="instruction-list">
+        <li>Enter your three words separated by commas.</li>
+        <li>The order of your words does not matter.</li>
+        <li>You can use any descriptive words you like (for example nouns or adjectives).</li>
+        <li>Some grids are hard to describe. Please still try to provide three words.</li>
+      </ul>
+      <p>Before you begin, please review the examples below. When you are ready, scroll down and click <strong>Start Task</strong>.</p>
       {% if answered > 0 %}
         <p>You have already completed {{ answered }} of {{ n_trials }} trials. You can continue where you left off.</p>
       {% endif %}

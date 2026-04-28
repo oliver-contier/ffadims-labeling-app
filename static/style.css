@@ -104,3 +104,16 @@ h2 {
   border: 1px solid #ccd3e4;
   margin-bottom: 10px;
 }
+
+.instruction-list {
+  margin: 8px 0 12px 18px;
+  padding: 0;
+}
+
+.instruction-list li {
+  margin: 6px 0;
+}
+
+.instruction-card {
+  border-left: 4px solid #3569e8;
+}
