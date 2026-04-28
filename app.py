@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import json
 import os
+import random
 from datetime import datetime, timezone
 from pathlib import Path
 from threading import Lock
@@ -12,11 +13,14 @@ from flask import Flask, abort, redirect, render_template, request, url_for
 
 
 APP_DIR = Path(__file__).resolve().parent
+STATIC_DIR = APP_DIR / "static"
 DATA_DIR = APP_DIR / "data"
 TRIALS_PATH = DATA_DIR / "trials.csv"
 TOKENS_PATH = DATA_DIR / "tokens.csv"
 PARTICIPANTS_PATH = DATA_DIR / "participants.csv"
 RESPONSES_PATH = DATA_DIR / "responses_long.csv"
+EXAMPLES_DIR = APP_DIR / "static" / "examples"
+EXAMPLES_MANIFEST = EXAMPLES_DIR / "examples.csv"
 
 PARTICIPANT_HEADERS = [
     "token",
@@ -126,6 +130,54 @@ def latest_labels_by_token(token: str) -> Dict[str, str]:
     return latest
 
 
+def load_examples() -> List[Dict[str, str]]:
+    examples: List[Dict[str, str]] = []
+    candidate_dirs: List[Path] = []
+    if EXAMPLES_DIR.exists():
+        candidate_dirs.append(EXAMPLES_DIR)
+    if STATIC_DIR.exists():
+        for p in sorted(STATIC_DIR.iterdir()):
+            if p.is_dir() and "example" in p.name.lower() and p not in candidate_dirs:
+                candidate_dirs.append(p)
+    if not candidate_dirs:
+        return examples
+
+    # Prefer manifest-driven examples if available in any candidate directory.
+    for examples_dir in candidate_dirs:
+        manifest_path = examples_dir / "examples.csv"
+        if not manifest_path.exists():
+            continue
+        with manifest_path.open("r", newline="", encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                image = row.get("image", "").strip()
+                label = row.get("label", "").strip()
+                if image:
+                    examples.append(
+                        {
+                            "image_path": f"{examples_dir.name}/{image}",
+                            "label_text": label or "Example labels not provided.",
+                        }
+                    )
+        if examples:
+            random.shuffle(examples)
+            return examples
+
+    # Fall back to deriving labels from filenames.
+    for examples_dir in candidate_dirs:
+        for path in sorted(examples_dir.iterdir()):
+            if path.suffix.lower() not in {".png", ".jpg", ".jpeg", ".webp"}:
+                continue
+            label_text = path.stem.replace("__", " - ").replace("_", ", ")
+            examples.append(
+                {
+                    "image_path": f"{examples_dir.name}/{path.name}",
+                    "label_text": label_text,
+                }
+            )
+    random.shuffle(examples)
+    return examples
+
+
 def make_app() -> Flask:
     load_local_env()
     app = Flask(__name__)
@@ -170,7 +222,38 @@ def make_app() -> Flask:
         labels = latest_labels_by_token(token)
         if participant["submitted"] == "1":
             return redirect(url_for("complete", token=token))
+        examples = load_examples()
+        return render_template(
+            "intro.html",
+            token=token,
+            n_trials=len(order),
+            examples=examples,
+            answered=sum(
+                1 for i in order if labels.get(trials[i]["dim_id"], "").strip()
+            ),
+        )
 
+    @app.post("/t/<token>/begin")
+    def begin_task(token: str):
+        ensure_storage()
+        trials = load_trials()
+        valid_tokens = load_valid_tokens()
+        if token not in valid_tokens:
+            return render_template("invalid.html"), 404
+
+        with _CSV_LOCK:
+            participants = load_participants()
+            participant = participants.get(token)
+            if participant is None:
+                return redirect(url_for("token_start", token=token))
+            if participant["submitted"] == "1":
+                return redirect(url_for("complete", token=token))
+            participant["last_seen_at"] = utc_now_iso()
+            participants[token] = participant
+            write_participants(participants)
+
+        order = json.loads(participant["trial_order_json"])
+        labels = latest_labels_by_token(token)
         for idx in range(1, len(order) + 1):
             dim_id = trials[order[idx - 1]]["dim_id"]
             if not labels.get(dim_id, "").strip():

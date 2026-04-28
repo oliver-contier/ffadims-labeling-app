@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Task Introduction</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="container">
+    <h1>Dimension Labeling Task</h1>
+
+    <section class="card">
+      <p>Thank you for participating. In this task, you will see grids of images. For each grid, type three words that best describe what the images have in common, separated by commas. Before you begin, please review the examples below. When you are ready, scroll down and click "Start Task".</p>
+      {% if answered > 0 %}
+        <p>You have already completed {{ answered }} of {{ n_trials }} trials. You can continue where you left off.</p>
+      {% endif %}
+    </section>
+
+    {% if examples %}
+      <section class="card">
+        <h2>Examples</h2>
+        <p>Here are example image grids with well descriptive labels:</p>
+        <div class="example-list">
+          {% for ex in examples %}
+            <article class="example-item">
+              <p><strong>Example labels:</strong> {{ ex.label_text }}</p>
+              <img class="example-grid" src="{{ url_for('static', filename=ex.image_path) }}" alt="Example grid {{ loop.index }}">
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+
+    <form class="card" method="post" action="{{ url_for('begin_task', token=token) }}">
+      <button type="submit">Start Task</button>
+    </form>
+  </main>
+</body>
+</html>

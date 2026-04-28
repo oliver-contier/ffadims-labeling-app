@@ -81,3 +81,26 @@ a {
   color: #2c57c1;
   text-decoration: none;
 }
+
+h2 {
+  margin-top: 0;
+}
+
+.example-list {
+  display: grid;
+  gap: 16px;
+}
+
+.example-item {
+  border: 1px solid #e4e8f2;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fafbfe;
+}
+
+.example-grid {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #ccd3e4;
+  margin-bottom: 10px;
+}
