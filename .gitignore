@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+
+# Runtime data
+data/tokens.csv
+data/participants.csv
+data/responses_long.csv
+data/export_submitted_latest.csv

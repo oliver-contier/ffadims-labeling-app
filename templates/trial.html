@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trial {{ trial_num }} / {{ n_trials }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="container">
+    <h1>Trial {{ trial_num }} of {{ n_trials }}</h1>
+
+    <form class="card" method="post" action="{{ url_for('trial_save', token=token, trial_num=trial_num) }}">
+      <label for="label">Labels</label>
+      <textarea id="label" name="label" rows="3" required>{{ current_label }}</textarea>
+
+      <div class="actions">
+        <button type="submit" name="direction" value="prev">Previous</button>
+        {% if trial_num < n_trials %}
+          <button type="submit" name="direction" value="next">Save & Next</button>
+        {% else %}
+          <button type="submit" name="direction" value="review">Save & Review</button>
+        {% endif %}
+      </div>
+    </form>
+
+    <section class="card">
+      <img class="grid" src="{{ url_for('static', filename=trial.grid_path) }}" alt="Dimension image grid">
+      <p><strong>Dimension:</strong> {{ trial.dim_id }}</p>
+      <p>Enter one or more labels separated by commas.</p>
+    </section>
+  </main>
+</body>
+</html>
